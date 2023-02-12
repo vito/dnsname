@@ -112,21 +112,20 @@ func appendToFile(path, podname string, aliases []string, ips []*net.IPNet) erro
 }
 
 // removeLineFromFile removes a given entry from the dnsmasq host file
-func removeFromFile(path, podname string) (bool, error) {
+func removeFromFile(path, podname string) error {
 	var (
 		keepers []string
 		found   bool
 	)
-	shouldHUP := false
 	backup := fmt.Sprintf("%s.old", path)
 	if err := os.Rename(path, backup); err != nil {
-		return shouldHUP, err
+		return err
 	}
 	f, err := os.Open(backup)
 	if err != nil {
 		//	if the open fails here, we need to revert things
 		renameFile(backup, path)
-		return shouldHUP, err
+		return err
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -150,18 +149,14 @@ func removeFromFile(path, podname string) (bool, error) {
 		// We never found a matching record; non-fatal
 		logrus.Debugf("a record for %s was never found in %s", podname, path)
 	}
-	fileLength, err := writeFile(path, keepers)
-	if err != nil {
+	if _, err := writeFile(path, keepers); err != nil {
 		renameFile(backup, path)
-		return shouldHUP, err
-	}
-	if fileLength > 0 {
-		shouldHUP = true
+		return err
 	}
 	if err := os.Remove(backup); err != nil {
 		logrus.Errorf("unable to delete '%s': %q", backup, err)
 	}
-	return shouldHUP, nil
+	return nil
 }
 
 // renameFile renames a file to backup

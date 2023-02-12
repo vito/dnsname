@@ -139,17 +139,14 @@ func cmdDel(args *skel.CmdArgs) error {
 			logrus.Errorf("unable to release lock for %q: %v", domainBaseDir, err)
 		}
 	}()
-	shouldHUP, err := removeFromFile(filepath.Join(domainBaseDir, hostsFileName), podname)
-	if err != nil {
+	if err := removeFromFile(filepath.Join(domainBaseDir, hostsFileName), podname); err != nil {
 		logrus.Error(err)
 		return nil
 	}
-	if shouldHUP {
-		// Now we need to HUP
-		err = dnsNameConf.hup()
-		if err != nil {
-			logrus.Error(err)
-		}
+	// Now we need to HUP
+	err = dnsNameConf.hup()
+	if err != nil {
+		logrus.Error(err)
 	}
 	return nil
 }
