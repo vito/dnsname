@@ -144,25 +144,12 @@ func cmdDel(args *skel.CmdArgs) error {
 		logrus.Error(err)
 		return nil
 	}
-	if !shouldHUP {
-		// if there are no hosts, we should just stop the dnsmasq instance to not take
-		// system resources
-		err = dnsNameConf.stop()
-		if err != nil {
-			logrus.Error(err)
-			return nil
-		}
-		// remove the config file
-		err = os.Remove(dnsNameConf.ConfigFile)
+	if shouldHUP {
+		// Now we need to HUP
+		err = dnsNameConf.hup()
 		if err != nil {
 			logrus.Error(err)
 		}
-		return nil
-	}
-	// Now we need to HUP
-	err = dnsNameConf.hup()
-	if err != nil {
-		logrus.Error(err)
 	}
 	return nil
 }
